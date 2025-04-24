@@ -8,7 +8,7 @@ load_dotenv()
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
-app = flask(__name__)
+app = Flask(__name__)
 
 @app.route('/')
 def home():
@@ -34,7 +34,8 @@ def callback():
     access_token = response_data.get('access_token')
     if not access_token:
         return 'Failed to retrieve access token', 400
+    
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=8000)
     print("OAuth server is running on http://localhost:5000")
     print("Please visit http://localhost:5000/callback to authenticate.")
