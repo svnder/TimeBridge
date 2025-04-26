@@ -15,7 +15,6 @@ app.secret_key = os.urandom(24)
 
 @app.route('/')
 def home():
-
     return '<a href="https://github.com/login/oauth/authorize?client_id={}&scope=repo">Logi sisse GitHubiga</a>'.format(CLIENT_ID)
 
 @app.route('/callback')
@@ -41,8 +40,11 @@ def callback():
     if not access_token:
         return 'Failed to retrieve access token', 400
     
-    return 'Access token: {}'.format(access_token)
+    session['access_token'] = access_token
+    return redirect('/dashboard')
 
+
+@app.route('/dashboard')
 def dashboard():
     access_token = session.get('access_token')
     if not access_token:
@@ -52,10 +54,23 @@ def dashboard():
     headers = {'Authorization': f'token {access_token}'}
     response = requests.get(user_url, headers=headers)
     user_data = response.json()
+    return '''
+
+    <h1>Dashboard</h1>
+    <p>Welcome, {}</p>
+    <img src="{}" alt="User Avatar" width="100" height="100">
+
+    <p><a href="/logout">Logout</a></p>
+    '''.format(user_data['login'], user_data['id'], user_data['avatar_url'])
     
     return f'Hello, {user_data["login"]}! Your GitHub ID is {user_data["id"]}.'
-    
+
+@app.route('/logout')
+def logout():
+    session.pop('access_token', None)
+    return redirect('/')
+
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)
     print("OAuth server is running on http://localhost:5000")
     print("Please visit http://localhost:5000/callback to authenticate.")
+    app.run(debug=True, port=8000)
