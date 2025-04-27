@@ -7,6 +7,8 @@ let loginTabId = null;
 let loginCheckInterval = null;
 let selectRepoFullName = null;
 
+
+let loadedTogglEntries = [];
 const loginButton = document.getElementById('loginButton');
 const loginButtonGithub = document.getElementById('githubLoginButton');
 const checkStatusButton = document.getElementById('checkStatusButton');
@@ -79,131 +81,166 @@ function checkLoginStatus(autoClose) {
             'Content-Type': 'application/json'
         }
     })
-        .then(response => {
-            if (response.status === 200) {
-                response.json().then(entries => {
-                    loader.style.display = 'none';
-                    statusText.innerHTML = "<strong>Toggl Status: Oled sisse loginud!</strong><br>";
+    .then(response => {
+        if (response.status === 200) {
+            response.json().then(entries => {
+                loadedTogglEntries = entries; // Salvestame sissekanded mällu
 
-                    if (entries.length > 0) {
-                        const maxEntries = Math.min(entries.length, 2);
-                        for (let i = 0; i < maxEntries; i++) {
-                            const entry = entries[i];
-                            const description = entry.description || "Kirjeldus puudub";
-                            const startTime = new Date(entry.start);
-                            const startFormatted = startTime.toLocaleString();
+                loader.style.display = 'none';
+                statusText.innerHTML = "<strong>Toggl Status: Oled sisse loginud!</strong><br><br>";
 
-                            let endFormatted = "Kestab veel...";
-                            if (entry.duration > 0) {
-                                const endTime = new Date(startTime.getTime() + (entry.duration * 1000));
-                                endFormatted = endTime.toLocaleString();
-                            }
+                if (entries.length > 0) {
+                    // 🔥 Lisame ainult ühe korra "Vali kõik" checkboxi
+                    statusText.innerHTML += `
+                        <div style="margin-bottom: 10px;">
+                            <input type="checkbox" id="selectAllEntries">
+                            <label for="selectAllEntries"><strong>Vali kõik sissekanded</strong></label>
+                        </div>
+                    `;
 
-                            statusText.innerHTML += `<p><strong>${i + 1}. Logi</strong><br>
-                        Kirjeldus: ${description}<br>
-                        Algus: ${startFormatted}<br>
-                        Lõpp: ${endFormatted}</p>`;
+                    // 🔥 Siis lisame iga logi eraldi
+                    entries.forEach((entry, i) => {
+                        const description = entry.description || "Kirjeldus puudub";
+                        const startTime = new Date(entry.start);
+                        const startFormatted = startTime.toLocaleString();
+
+                        let endFormatted = "Kestab veel...";
+                        if (entry.duration > 0) {
+                            const endTime = new Date(startTime.getTime() + (entry.duration * 1000));
+                            endFormatted = endTime.toLocaleString();
                         }
-                    } else {
-                        statusText.innerHTML += "Aja logisid ei leitud.";
-                    }
 
-                    loginButton.style.display = 'none';
-                    checkStatusButton.style.display = 'none';
+                        statusText.innerHTML += `
+                            <div style="margin-bottom: 8px;">
+                                <input type="checkbox" class="toggl-entry-checkbox" data-entry-index="${i}">
+                                <strong>${i + 1}. Logi</strong><br>
+                                Kirjeldus: ${description}<br>
+                                Algus: ${startFormatted}<br>
+                                Lõpp: ${endFormatted}
+                            </div>
+                        `;
+                    });
 
-                    if (autoClose && loginTabId !== null) {
-                        browser.tabs.remove(loginTabId);
-                        loginTabId = null;
-                    }
+                    // 🔥 Pärast DOMi ehitamist lisame "Vali kõik" event listeneri
+                    const selectAllCheckbox = document.getElementById('selectAllEntries');
+                    selectAllCheckbox.addEventListener('change', (e) => {
+                        const isChecked = e.target.checked;
+                        const allCheckboxes = document.querySelectorAll('.toggl-entry-checkbox');
+                        allCheckboxes.forEach(checkbox => {
+                            checkbox.checked = isChecked;
+                        });
+                    });
 
-                    if (loginCheckInterval) {
-                        clearInterval(loginCheckInterval);
-                        loginCheckInterval = null;
-                    }
-                });
-            } else if (response.status === 401) {
-                loader.style.display = 'none';
-                statusText.textContent = "❌ Pole veel sisse loginud Togglisse.";
-            } else {
-                loader.style.display = 'none';
-                statusText.textContent = "⚠️ Tundmatu viga: " + response.status;
-            }
-        })
-        .catch(error => {
+                } else {
+                    statusText.innerHTML += "Aja logisid ei leitud.";
+                }
+
+                loginButton.style.display = 'none';
+                checkStatusButton.style.display = 'none';
+
+                if (autoClose && loginTabId !== null) {
+                    browser.tabs.remove(loginTabId);
+                    loginTabId = null;
+                }
+
+                if (loginCheckInterval) {
+                    clearInterval(loginCheckInterval);
+                    loginCheckInterval = null;
+                }
+            });
+        } else if (response.status === 401) {
             loader.style.display = 'none';
-            statusText.textContent = "⚠️ Viga Toggl API-ga: " + error.message;
-        });
+            statusText.textContent = "❌ Pole veel sisse loginud Togglisse.";
+        } else {
+            loader.style.display = 'none';
+            statusText.textContent = "⚠️ Tundmatu viga: " + response.status;
+        }
+    })
+    .catch(error => {
+        loader.style.display = 'none';
+        statusText.textContent = "⚠️ Viga Toggl API-ga: " + error.message;
+    });
 }
 // laebib GitHub issue'de valiku
 
+
 addTogglCommentButton.addEventListener('click', () => {
-    const selectIssueNumber = issueSelect.value;
+    const selectedIssueNumber = issueSelect.value;
     const githubToken = localStorage.getItem('githubToken');
 
     if (!githubToken) {
         githubStatusText.textContent = "❌ Palun logi sisse GitHubi enne kommentaari lisamist.";
         return;
     }
-    if (!selectIssueNumber) {
+    if (!selectedIssueNumber) {
         githubStatusText.textContent = "❌ Palun vali GitHubi issue enne kommentaari lisamist.";
         return;
     }
 
-    // 🔥 Fetchime viimase Toggl logi enne kommentaari postitamist
-    fetch('https://api.track.toggl.com/api/v9/me/time_entries', {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(response => response.json())
-        .then(entries => {
-            if (entries.length > 0) {
-                const lastEntry = entries[0];
-                const description = lastEntry.description || "Kirjeldus puudub";
+    const selectedCheckboxes = document.querySelectorAll('.toggl-entry-checkbox:checked');
+    if (selectedCheckboxes.length === 0) {
+        githubStatusText.textContent = "❌ Palun vali vähemalt üks Toggl sissekanne.";
+        return;
+    }
 
-                const startDate = new Date(lastEntry.start);
-                const dateFormatted = startDate.toLocaleDateString(); // nt 26.04.2025
-                const startTimeFormatted = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // nt 14:00
+    let commentBody = '```tekst\n';
 
-                let endTimeFormatted = "Kestab veel...";
-                let durationFormatted = "Kestab";
+    let totalTime = 0;
 
-                if (lastEntry.duration > 0) {
-                    const endDate = new Date(startDate.getTime() + lastEntry.duration * 1000);
-                    endTimeFormatted = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // nt 15:00
+    selectedCheckboxes.forEach(checkbox => {
+        const entryIndex = parseInt(checkbox.getAttribute('data-entry-index'));
+        const entry = loadedTogglEntries[entryIndex]; // <<< kasutame olemasolevat mälu, mitte uut fetchi
 
-                    const durationMinutesTotal = Math.floor(lastEntry.duration / 60); // sekundid → minutid
-                    const durationHours = Math.floor(durationMinutesTotal / 60);
-                    const durationMinutes = durationMinutesTotal % 60;
+        if (!entry) return;
 
-                    if (durationMinutes > 0) {
-                        durationFormatted = `${durationHours} tundi ${durationMinutes} minutit`;
-                    } else {
-                        durationFormatted = `${durationHours} tundi`;
-                    }
-                }
+        const description = entry.description || "Kirjeldus puudub";
+        const startDate = new Date(entry.start);
+        const dateFormatted = startDate.toLocaleDateString();
+        const startTimeFormatted = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                const commentBody = `
-                🗓️ Kuupäev: ${dateFormatted}\n
-                📝 Kirjeldus: ${description}\n
-                🕒 Algus: ${startTimeFormatted}\n
-                🕒 Lõpp: ${endTimeFormatted}\n
-                ⏱️ Kestus: ${durationFormatted}
-                `;
+        let endTimeFormatted = "Kestab veel...";
+        let durationFormatted = "Kestab";
 
+        if (entry.duration > 0) {
+            const endDate = new Date(startDate.getTime() + entry.duration * 1000);
+            endTimeFormatted = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+            const durationMinutesTotal = Math.floor(entry.duration / 60);
+            const durationHours = Math.floor(durationMinutesTotal / 60);
+            const durationMinutes = durationMinutesTotal % 60;
 
-                postCommentToGithub(githubToken, selectIssueNumber, commentBody);
+            if (durationMinutes > 0) {
+                durationFormatted = `${durationHours} tundi ${durationMinutes} minutit`;
             } else {
-                githubStatusText.textContent = "❌ Ei leitud ühtegi Toggl logi.";
+                durationFormatted = `${durationHours} tundi`;
             }
-        })
-        .catch(error => {
-            githubStatusText.textContent = "⚠️ Viga Toggl API ühendamisel: " + error.message;
-        });
+            totalTime += entry.duration; 
+        }
+
+        commentBody += `
+🗓️ Kuupäev: ${dateFormatted}
+📝 Kirjeldus: ${description}
+🕒 Algus: ${startTimeFormatted}
+🕒 Lõpp: ${endTimeFormatted}
+⏱️ Kestus: ${durationFormatted}
+
+-------------------------------
+`;
+    });
+    if (totalTime > 0) {
+        const totalHours = Math.floor(totalTime / 3600);
+        const totalMinutes = Math.floor((totalTime % 3600) / 60);
+        commentBody += `**Kokku: ${totalHours} tundi ${totalMinutes} minutit**\n`;
+    }
+    commentBody += '```';
+
+    if (commentBody.trim() !== '') {
+        postCommentToGithub(githubToken, selectedIssueNumber, commentBody);
+    } else {
+        githubStatusText.textContent = "❌ Midagi ei saanud kommentaariks koostada.";
+    }
 });
+
 
 function postCommentToGithub(token, issueNumber, comment) {
     const repoFullName = 'svnder/timebridge';
@@ -246,16 +283,16 @@ function fetchUserRepositories(token) {
             'Accept': 'application/vnd.github.v3+json'
         }
     })
-    .then(response => response.json())
-    .then(repos => {
-        repoSelect.innerHTML = '<option value="">Vali Repo</option>';
-        repos.forEach(repo => {
-            const option = document.createElement('option');
-            option.value = repo.full_name;  // nt "svnder/timebridge"
-            option.textContent = repo.name; // nt "timebridge"
-            repoSelect.appendChild(option);
+        .then(response => response.json())
+        .then(repos => {
+            repoSelect.innerHTML = '<option value="">Vali Repo</option>';
+            repos.forEach(repo => {
+                const option = document.createElement('option');
+                option.value = repo.full_name;  // nt "svnder/timebridge"
+                option.textContent = repo.name; // nt "timebridge"
+                repoSelect.appendChild(option);
+            });
         });
-    });
 }
 
 // Kui kasutaja valib repo
@@ -280,23 +317,23 @@ function loadIssuesForRepo(repoFullName) {
             'Accept': 'application/vnd.github.v3+json'
         }
     })
-    .then(response => response.json())
-    .then(issues => {
-        issueSelect.innerHTML = '<option value="">Vali Issue</option>';
-        if (issues.length > 0) {
-            issues.forEach(issue => {
+        .then(response => response.json())
+        .then(issues => {
+            issueSelect.innerHTML = '<option value="">Vali Issue</option>';
+            if (issues.length > 0) {
+                issues.forEach(issue => {
+                    const option = document.createElement('option');
+                    option.value = issue.number;
+                    option.textContent = `#${issue.number} - ${issue.title}`;
+                    issueSelect.appendChild(option);
+                });
+            } else {
                 const option = document.createElement('option');
-                option.value = issue.number;
-                option.textContent = `#${issue.number} - ${issue.title}`;
+                option.textContent = "Issuesid pole.";
+                option.disabled = true;
                 issueSelect.appendChild(option);
-            });
-        } else {
-            const option = document.createElement('option');
-            option.textContent = "Issuesid pole.";
-            option.disabled = true;
-            issueSelect.appendChild(option);
-        }
-    });
+            }
+        });
 }
 
 
@@ -307,9 +344,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('githubToken');
     const user = localStorage.getItem('githubUser');
     const avatar = localStorage.getItem('githubUserAvatar');
-    
+
     issueSelect.disabled = true;
     issueSelect.innerHTML = '<option value="">Vali kõigepealt Repo</option>';
+
+
 
     if (token && user) {
         document.getElementById('githubTokenInput').style.display = 'none';
