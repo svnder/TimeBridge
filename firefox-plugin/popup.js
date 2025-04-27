@@ -5,6 +5,7 @@ if (typeof browser === "undefined") {
 
 let loginTabId = null;
 let loginCheckInterval = null;
+let selectRepoFullName = null;
 
 const loginButton = document.getElementById('loginButton');
 const loginButtonGithub = document.getElementById('githubLoginButton');
@@ -134,27 +135,6 @@ function checkLoginStatus(autoClose) {
         });
 }
 // laebib GitHub issue'de valiku
-function loadGithubIssue(token) {
-    const repoFullName = 'svnder/timebridge';
-
-    fetch('https://api.github.com/repos/' + repoFullName + '/issues', {
-        method: 'GET',
-        headers: {
-            'authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-        }
-    })
-        .then(response => response.json())
-        .then(issues => {
-            issueSelect.innerHTML = '<option value="">Vali Issue</option>';
-            issues.forEach(issue => {
-                const option = document.createElement('option');
-                option.value = issue.number;
-                option.textContent = `#${issue.number} - ${issue.title}`;
-                issueSelect.appendChild(option);
-            });
-        });
-}
 
 addTogglCommentButton.addEventListener('click', () => {
     const selectIssueNumber = issueSelect.value;
@@ -226,7 +206,7 @@ addTogglCommentButton.addEventListener('click', () => {
 });
 
 function postCommentToGithub(token, issueNumber, comment) {
-    const repoFullName = 'svnder/timebridge'; // <-- Repo nimi
+    const repoFullName = 'svnder/timebridge';
 
     fetch(`https://api.github.com/repos/${repoFullName}/issues/${issueNumber}/comments`, {
         method: 'POST',
@@ -252,13 +232,84 @@ function postCommentToGithub(token, issueNumber, comment) {
 }
 
 
+
+// Repositooriumide valik
+const repoSelect = document.getElementById('repoSelect');
+const issueSelect = document.getElementById('issueSelect');
+
+// Fetch kasutaja repositooriumid
+function fetchUserRepositories(token) {
+    fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
+        method: 'GET',
+        headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+        }
+    })
+    .then(response => response.json())
+    .then(repos => {
+        repoSelect.innerHTML = '<option value="">Vali Repo</option>';
+        repos.forEach(repo => {
+            const option = document.createElement('option');
+            option.value = repo.full_name;  // nt "svnder/timebridge"
+            option.textContent = repo.name; // nt "timebridge"
+            repoSelect.appendChild(option);
+        });
+    });
+}
+
+// Kui kasutaja valib repo
+repoSelect.addEventListener('change', () => {
+    const selectedRepo = repoSelect.value;
+    if (selectedRepo) {
+        issueSelect.disabled = false;
+        loadIssuesForRepo(selectedRepo);
+    } else {
+        issueSelect.disabled = true;
+        issueSelect.innerHTML = '<option value="">Vali kõigepealt Repo</option>';
+    }
+});
+
+// Lae valitud repo issues
+function loadIssuesForRepo(repoFullName) {
+    const githubToken = localStorage.getItem('githubToken');
+    fetch(`https://api.github.com/repos/${repoFullName}/issues`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+        }
+    })
+    .then(response => response.json())
+    .then(issues => {
+        issueSelect.innerHTML = '<option value="">Vali Issue</option>';
+        if (issues.length > 0) {
+            issues.forEach(issue => {
+                const option = document.createElement('option');
+                option.value = issue.number;
+                option.textContent = `#${issue.number} - ${issue.title}`;
+                issueSelect.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.textContent = "Issuesid pole.";
+            option.disabled = true;
+            issueSelect.appendChild(option);
+        }
+    });
+}
+
+
+
 // Automaatne kontroll kui leht laetakse
 document.addEventListener('DOMContentLoaded', () => {
     checkLoginStatus(false);
-
     const token = localStorage.getItem('githubToken');
     const user = localStorage.getItem('githubUser');
     const avatar = localStorage.getItem('githubUserAvatar');
+    
+    issueSelect.disabled = true;
+    issueSelect.innerHTML = '<option value="">Vali kõigepealt Repo</option>';
 
     if (token && user) {
         document.getElementById('githubTokenInput').style.display = 'none';
@@ -268,38 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (avatar) {
             githubStatusText.innerHTML += `<img src="${avatar}" alt="GitHub Avatar" style="width: 60px; height: 60px"><br><br>`;
         }
-        loadGithubIssue(token);
         fetchUserRepositories(token);
     }
 });
-
-function fetchUserRepositories(token) {
-    fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
-        method: 'GET',
-        headers: {
-            'Authorization': `token ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-        }
-    })
-        .then(response => response.json())
-        .then(repos => {
-            const repoSelect = document.getElementById('repoSelect');
-            repoSelect.innerHTML = '<option value="">Vali Repo</option>';
-            if (repos.length > 0) {
-                repos.forEach(repo => {
-                    const option = document.createElement('option');
-                    option.value = repo.full_name;
-                    option.textContent = repo.name;
-                    repoSelect.appendChild(option);
-                });
-            } else {
-                const option = document.createElement('option');
-                option.textContent = "Ei leitud ühtegi repositooriumi.";
-                option.disabled = true;
-                repoSelect.appendChild(option);
-            }
-        })
-        .catch(error => {
-            console.error('Viga repositooriumide laadimisel:', error);
-        });
-}
