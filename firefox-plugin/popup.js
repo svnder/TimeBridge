@@ -144,16 +144,16 @@ function loadGithubIssue(token) {
             'Accept': 'application/vnd.github.v3+json'
         }
     })
-    .then(response => response.json())
-    .then(issues => {
-        issueSelect.innerHTML = '<option value="">Vali Issue</option>';
-        issues.forEach(issue => {
-            const option = document.createElement('option');
-            option.value = issue.number;
-            option.textContent = `#${issue.number} - ${issue.title}`;
-            issueSelect.appendChild(option);
-    });
-});
+        .then(response => response.json())
+        .then(issues => {
+            issueSelect.innerHTML = '<option value="">Vali Issue</option>';
+            issues.forEach(issue => {
+                const option = document.createElement('option');
+                option.value = issue.number;
+                option.textContent = `#${issue.number} - ${issue.title}`;
+                issueSelect.appendChild(option);
+            });
+        });
 }
 
 addTogglCommentButton.addEventListener('click', () => {
@@ -168,27 +168,92 @@ addTogglCommentButton.addEventListener('click', () => {
         githubStatusText.textContent = "❌ Palun vali GitHubi issue enne kommentaari lisamist.";
         return;
     }
-    
-    fetch('https://api.github.com/repos/svnder/timebridge/issues/' + selectIssueNumber + '/comments', {
+
+    // 🔥 Fetchime viimase Toggl logi enne kommentaari postitamist
+    fetch('https://api.track.toggl.com/api/v9/me/time_entries', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => response.json())
+        .then(entries => {
+            if (entries.length > 0) {
+                const lastEntry = entries[0];
+                const description = lastEntry.description || "Kirjeldus puudub";
+                
+                const startDate = new Date(lastEntry.start);
+                const dateFormatted = startDate.toLocaleDateString(); // nt 26.04.2025
+                const startTimeFormatted = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // nt 14:00
+                
+                let endTimeFormatted = "Kestab veel...";
+                let durationFormatted = "Kestab";
+                
+                if (lastEntry.duration > 0) {
+                    const endDate = new Date(startDate.getTime() + lastEntry.duration * 1000);
+                    endTimeFormatted = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // nt 15:00
+                
+                    const durationMinutesTotal = Math.floor(lastEntry.duration / 60); // sekundid → minutid
+                    const durationHours = Math.floor(durationMinutesTotal / 60);
+                    const durationMinutes = durationMinutesTotal % 60;
+                
+                    if (durationMinutes > 0) {
+                        durationFormatted = `${durationHours} tundi ${durationMinutes} minutit`;
+                    } else {
+                        durationFormatted = `${durationHours} tundi`;
+                    }
+                }
+                
+                // 🔥 Valmis kommenteeritav body:
+                const commentBody = `
+                🗓️ Kuupäev: ${dateFormatted}\n
+                📝 Kirjeldus: ${description}\n
+                🕒 Algus: ${startTimeFormatted}\n
+                🕒 Lõpp: ${endTimeFormatted}\n
+                ⏱️ Kestus: ${durationFormatted}
+                `;
+                
+
+
+                postCommentToGithub(githubToken, selectIssueNumber, commentBody);
+            } else {
+                githubStatusText.textContent = "❌ Ei leitud ühtegi Toggl logi.";
+            }
+        })
+        .catch(error => {
+            githubStatusText.textContent = "⚠️ Viga Toggl API ühendamisel: " + error.message;
+        });
+});
+
+function postCommentToGithub(token, issueNumber, comment) {
+    const repoFullName = 'svnder/timebridge'; // <-- Repo nimi
+
+    fetch(`https://api.github.com/repos/${repoFullName}/issues/${issueNumber}/comments`, {
         method: 'POST',
         headers: {
-            'Authorization': `token ${githubToken}`,
+            'Authorization': `token ${token}`,
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ body: "Toggl logi lisatud!" })
+        body: JSON.stringify({
+            body: comment
+        })
     })
-    .then(response => {
-        if (response.status === 201) {
-            githubStatusText.textContent = "✅ Kommenteerimine õnnestus!";
-        } else {
-            githubStatusText.textContent = "❌ Kommenteerimine nurjus. Kontrolli õigusi.";
-        }
-    })
-    .catch(error => {
-        githubStatusText.textContent = "⚠️ Viga kommenteerimisel: " + error.message;
-    });
-});
+        .then(response => {
+            if (response.status === 201) {
+                githubStatusText.textContent = "✅ Kommenteerimine õnnestus!";
+            } else {
+                githubStatusText.textContent = "❌ Kommenteerimine nurjus. Kontrolli õigusi.";
+            }
+        })
+        .catch(error => {
+            githubStatusText.textContent = "⚠️ Viga GitHub API ühendamisel: " + error.message;
+        });
+}
+
+
+
 
 // Automaatne kontroll kui leht laetakse
 document.addEventListener('DOMContentLoaded', () => {
@@ -219,20 +284,20 @@ function fetchUserRepositories(token) {
             'Accept': 'application/vnd.github.v3+json'
         }
     })
-    .then(response => response.json())
-    .then(repos => {
-        if (repos.length > 0) {
-            let repoHtml = '<h4>Viimased 5 repositooriumi:</h4><ul>';
-            repos.forEach(repo => {
-                repoHtml += `<li><a href="${repo.html_url}" target="_blank">${repo.name}</a> - ⭐ ${repo.stargazers_count}</li>`;
-            });
-            repoHtml += '</ul>';
-            githubStatusText.innerHTML += repoHtml;
-        } else {
-            githubStatusText.innerHTML += "<p>Repositooriume ei leitud.</p>";
-        }
-    })
-    .catch(error => {
-        githubStatusText.innerHTML += "<p>⚠️ Viga reposide laadimisel: " + error.message + "</p>";
-    });
+        .then(response => response.json())
+        .then(repos => {
+            if (repos.length > 0) {
+                let repoHtml = '<h4>Viimased 5 repositooriumi:</h4><ul>';
+                repos.forEach(repo => {
+                    repoHtml += `<li><a href="${repo.html_url}" target="_blank">${repo.name}</a> - ⭐ ${repo.stargazers_count}</li>`;
+                });
+                repoHtml += '</ul>';
+                githubStatusText.innerHTML += repoHtml;
+            } else {
+                githubStatusText.innerHTML += "<p>Repositooriume ei leitud.</p>";
+            }
+        })
+        .catch(error => {
+            githubStatusText.innerHTML += "<p>⚠️ Viga reposide laadimisel: " + error.message + "</p>";
+        });
 }
