@@ -7,6 +7,7 @@ load_dotenv()
 
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+REDIRECT_URI = 'http://localhost:5000/callback'
 GITHUB_API_URL = 'https://api.github.com/user'
 
 
@@ -15,7 +16,11 @@ app.secret_key = os.urandom(24)
 
 @app.route('/')
 def home():
-    return '<a href="https://github.com/login/oauth/authorize?client_id={}&scope=repo">Logi sisse GitHubiga</a>'.format(CLIENT_ID)
+    return '<a href="/login">Logi sisse GitHubiga</a>'
+
+@app.route('/login')
+def login():
+    return redirect(f"https://github.com/login/oauth/authorize?client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=repo")
 
 @app.route('/callback')
 def callback():
@@ -29,7 +34,7 @@ def callback():
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET,
         'code': code,
-        'redirect_uri': 'http://localhost:5000/callback'
+        'redirect_uri': REDIRECT_URI
     }
     
     response = requests.post(token_url, headers=headers, data=data)
@@ -59,11 +64,9 @@ def dashboard():
     <h1>Dashboard</h1>
     <p>Welcome, {}</p>
     <img src="{}" alt="User Avatar" width="100" height="100">
-
     <p><a href="/logout">Logout</a></p>
     '''.format(user_data['login'], user_data['id'], user_data['avatar_url'])
-    
-    return f'Hello, {user_data["login"]}! Your GitHub ID is {user_data["id"]}.'
+
 
 @app.route('/logout')
 def logout():

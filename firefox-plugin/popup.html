@@ -2,21 +2,30 @@
 <html lang="et">
 <head>
     <meta charset="UTF-8">
-    <title>Toggl login</title>
+    <title>TimeBridge v1.0</title>
     <style>
         #loader {
             display: none;
-            margin-top: 10px;
+            margin-top: 0px;
         }
     </style>
 </head>
 <body>
     <h2>TimeBridge v1.0</h2>
     <button id="loginButton">Logi sisse Toggl kontole</button>
-    <br><br>
-    <button id="checkStatusButton">Kontrolli ühendust</button>
+    <h3>GitHub ühendus</h3>
+    <input type="text" id="githubTokenInput" placeholder="Sisesta GitHub API Token">
+    <button id="githubLoginButton">Logi sisse GitHubiga</button>
+    <div id="loader">⏳ Kontrollin ühendust...</div>
+    <p id="githubStatusText"></p>
+    <img id="githubUserAvatar" src="" alt="">
+    <div id="repoSection" style="display:none;">
+    <h2>Minu repod</h2>
+        <ul id="repoList"></ul>
+        </div>
+    <h3>Toggl ühendus</h3>
     <p id="statusText"></p>
-    <div id="loader">⏳ Kontrollin sisselogimist...</div>
+
 
     <script src="popup.js"></script>
 </body>

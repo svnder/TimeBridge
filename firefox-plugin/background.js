@@ -21,6 +21,10 @@ browser.storage.local.get('togglToken').then((result) => {
         }
     })
     .catch(error => {
-        console.error('Axios error Toggl API päringul:', error);
+        if (error.response) {
+            console.log('Viga api vastuses', error.response.status, error.response.data);
+        } else {
+            console.log('Viga api päringus', error.message);
+        }
     });
 })
