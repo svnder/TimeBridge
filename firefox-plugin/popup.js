@@ -182,30 +182,29 @@ addTogglCommentButton.addEventListener('click', () => {
             if (entries.length > 0) {
                 const lastEntry = entries[0];
                 const description = lastEntry.description || "Kirjeldus puudub";
-                
+
                 const startDate = new Date(lastEntry.start);
                 const dateFormatted = startDate.toLocaleDateString(); // nt 26.04.2025
                 const startTimeFormatted = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // nt 14:00
-                
+
                 let endTimeFormatted = "Kestab veel...";
                 let durationFormatted = "Kestab";
-                
+
                 if (lastEntry.duration > 0) {
                     const endDate = new Date(startDate.getTime() + lastEntry.duration * 1000);
                     endTimeFormatted = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // nt 15:00
-                
+
                     const durationMinutesTotal = Math.floor(lastEntry.duration / 60); // sekundid → minutid
                     const durationHours = Math.floor(durationMinutesTotal / 60);
                     const durationMinutes = durationMinutesTotal % 60;
-                
+
                     if (durationMinutes > 0) {
                         durationFormatted = `${durationHours} tundi ${durationMinutes} minutit`;
                     } else {
                         durationFormatted = `${durationHours} tundi`;
                     }
                 }
-                
-                // 🔥 Valmis kommenteeritav body:
+
                 const commentBody = `
                 🗓️ Kuupäev: ${dateFormatted}\n
                 📝 Kirjeldus: ${description}\n
@@ -213,7 +212,7 @@ addTogglCommentButton.addEventListener('click', () => {
                 🕒 Lõpp: ${endTimeFormatted}\n
                 ⏱️ Kestus: ${durationFormatted}
                 `;
-                
+
 
 
                 postCommentToGithub(githubToken, selectIssueNumber, commentBody);
@@ -253,8 +252,6 @@ function postCommentToGithub(token, issueNumber, comment) {
 }
 
 
-
-
 // Automaatne kontroll kui leht laetakse
 document.addEventListener('DOMContentLoaded', () => {
     checkLoginStatus(false);
@@ -277,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function fetchUserRepositories(token) {
-    fetch('https://api.github.com/user/repos?sort=updated&per_page=5', {
+    fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
         method: 'GET',
         headers: {
             'Authorization': `token ${token}`,
@@ -286,18 +283,23 @@ function fetchUserRepositories(token) {
     })
         .then(response => response.json())
         .then(repos => {
+            const repoSelect = document.getElementById('repoSelect');
+            repoSelect.innerHTML = '<option value="">Vali Repo</option>';
             if (repos.length > 0) {
-                let repoHtml = '<h4>Viimased 5 repositooriumi:</h4><ul>';
                 repos.forEach(repo => {
-                    repoHtml += `<li><a href="${repo.html_url}" target="_blank">${repo.name}</a> - ⭐ ${repo.stargazers_count}</li>`;
+                    const option = document.createElement('option');
+                    option.value = repo.full_name;
+                    option.textContent = repo.name;
+                    repoSelect.appendChild(option);
                 });
-                repoHtml += '</ul>';
-                githubStatusText.innerHTML += repoHtml;
             } else {
-                githubStatusText.innerHTML += "<p>Repositooriume ei leitud.</p>";
+                const option = document.createElement('option');
+                option.textContent = "Ei leitud ühtegi repositooriumi.";
+                option.disabled = true;
+                repoSelect.appendChild(option);
             }
         })
         .catch(error => {
-            githubStatusText.innerHTML += "<p>⚠️ Viga reposide laadimisel: " + error.message + "</p>";
+            console.error('Viga repositooriumide laadimisel:', error);
         });
 }
