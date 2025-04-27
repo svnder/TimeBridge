@@ -133,6 +133,62 @@ function checkLoginStatus(autoClose) {
             statusText.textContent = "⚠️ Viga Toggl API-ga: " + error.message;
         });
 }
+// laebib GitHub issue'de valiku
+function loadGithubIssue(token) {
+    const repoFullName = 'svnder/timebridge';
+
+    fetch('https://api.github.com/repos/' + repoFullName + '/issues', {
+        method: 'GET',
+        headers: {
+            'authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+        }
+    })
+    .then(response => response.json())
+    .then(issues => {
+        issueSelect.innerHTML = '<option value="">Vali Issue</option>';
+        issues.forEach(issue => {
+            const option = document.createElement('option');
+            option.value = issue.number;
+            option.textContent = `#${issue.number} - ${issue.title}`;
+            issueSelect.appendChild(option);
+    });
+});
+}
+
+addTogglCommentButton.addEventListener('click', () => {
+    const selectIssueNumber = issueSelect.value;
+    const githubToken = localStorage.getItem('githubToken');
+
+    if (!githubToken) {
+        githubStatusText.textContent = "❌ Palun logi sisse GitHubi enne kommentaari lisamist.";
+        return;
+    }
+    if (!selectIssueNumber) {
+        githubStatusText.textContent = "❌ Palun vali GitHubi issue enne kommentaari lisamist.";
+        return;
+    }
+    
+    fetch('https://api.github.com/repos/svnder/timebridge/issues/' + selectIssueNumber + '/comments', {
+        method: 'POST',
+        headers: {
+            'Authorization': `token ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ body: "Toggl logi lisatud!" })
+    })
+    .then(response => {
+        if (response.status === 201) {
+            githubStatusText.textContent = "✅ Kommenteerimine õnnestus!";
+        } else {
+            githubStatusText.textContent = "❌ Kommenteerimine nurjus. Kontrolli õigusi.";
+        }
+    })
+    .catch(error => {
+        githubStatusText.textContent = "⚠️ Viga kommenteerimisel: " + error.message;
+    });
+});
 
 // Automaatne kontroll kui leht laetakse
 document.addEventListener('DOMContentLoaded', () => {
@@ -150,13 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (avatar) {
             githubStatusText.innerHTML += `<img src="${avatar}" alt="GitHub Avatar" style="width: 60px; height: 60px"><br><br>`;
         }
-
-        // 🔥 Siin kohe kutsume repo laadimise funktsiooni:
+        loadGithubIssue(token);
         fetchUserRepositories(token);
     }
 });
-
-// Lisa see funktsioon kuhugi alla popup.js faili:
 
 function fetchUserRepositories(token) {
     fetch('https://api.github.com/user/repos?sort=updated&per_page=5', {

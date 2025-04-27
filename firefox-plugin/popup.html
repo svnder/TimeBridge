@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="et">
+
 <head>
     <meta charset="UTF-8">
     <title>TimeBridge v1.0</title>
@@ -10,6 +11,7 @@
         }
     </style>
 </head>
+
 <body>
     <h2>TimeBridge v1.0</h2>
     <button id="loginButton">Logi sisse Toggl kontole</button>
@@ -19,14 +21,21 @@
     <div id="loader">⏳ Kontrollin ühendust...</div>
     <p id="githubStatusText"></p>
     <img id="githubUserAvatar" src="" alt="">
-    <div id="repoSection" style="display:none;">
-    <h2>Minu repod</h2>
-        <ul id="repoList"></ul>
-        </div>
+    <h3>Lisa Toggl logi GitHub Issue'le</h3>
+
+    <select id="issueSelect">
+        <option value="">Vali Issue</option>
+    </select>
+    <br><br>
+    <button id="addTogglCommentButton">Lisa Toggl logi Issue kommentaari</button>
+
+    <p id="commentStatusText"></p>
+
     <h3>Toggl ühendus</h3>
     <p id="statusText"></p>
 
 
     <script src="popup.js"></script>
 </body>
+
 </html>
