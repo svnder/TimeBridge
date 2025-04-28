@@ -14,20 +14,18 @@
 </head>
 
 <body>
-    <h2>TimeBridge v1.0</h2>
+    <h2 id="titleName">TimeBridge v1.0</h2>
     <div id="popupContent">
         <div id="loginContainer">
             <h3>GitHub ühendus</h3>
             <input type="text" id="githubTokenInput" placeholder="Sisesta GitHub API Token">
+            <a id="tokenGuide" href="/">Kuidas GitHubi API token kätte saada</a>
             <button id="githubLoginButton">Logi sisse GitHubiga</button>
-            <br><br>
+            <p id="githubStatusText"></p>
+            <h3>Toggl ühendus</h3>
             <button id="loginButton">Logi sisse Toggl kontole</button>
         </div>
         <div id="leftSide">
-            
-
-
-
             <div id="loader">⏳ Kontrollin ühendust...</div>
             <p id="githubStatusText"></p>
 
