@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>TimeBridge v1.0</title>
+    <link rel="stylesheet" href="/popup.css">
     <style>
         #loader {
             display: none;
@@ -13,31 +14,45 @@
 </head>
 
 <body>
-    <h2>TimeBridge v1.0</h2>
-    <button id="loginButton">Logi sisse Toggl kontole</button>
-    <h3>GitHub ühendus</h3>
-    <input type="text" id="githubTokenInput" placeholder="Sisesta GitHub API Token">
-    <button id="githubLoginButton">Logi sisse GitHubiga</button>
-    <div id="loader">⏳ Kontrollin ühendust...</div>
-    <p id="githubStatusText"></p>
-    <img id="githubUserAvatar" src="" alt="">
-    <h3>Lisa Toggl logi GitHub Issue'le</h3>
-    <h3>Vali Repositoorium</h3>
-    <select id="repoSelect">
-        <option value="">Vali Repositoorium</option>
-    </select>
-    <select id="issueSelect">
-        <option value="">Vali Issue</option>
-    </select>
-    <br><br>
-    <button id="addTogglCommentButton">Lisa Toggl logi Issue kommentaari</button>
+    <h2 id="titleName">TimeBridge v1.0</h2>
+    <div id="popupContent">
+        <div id="loginContainer">
+            <h3>GitHub ühendus</h3>
+            <input type="text" id="githubTokenInput" placeholder="Sisesta GitHub API Token">
+            <a id="tokenGuide" href="/">Kuidas GitHubi API token kätte saada</a>
+            <button id="githubLoginButton">Logi sisse GitHubiga</button>
+            <p id="githubStatusText"></p>
+            <h3>Toggl ühendus</h3>
+            <button id="loginButton">Logi sisse Toggl kontole</button>
+        </div>
+        <div id="leftSide">
+            <div id="loader">⏳ Kontrollin ühendust...</div>
+            <p id="githubStatusText"></p>
 
-    <p id="commentStatusText"></p>
+            <img id="githubUserAvatar" src="" alt="">
 
-    <h3>Toggl ühendus</h3>
-    <p id="statusText"></p>
+            <h3>Lisa Toggl logi GitHub Issue'le</h3>
 
+            <h3>Vali Repositoorium</h3>
+            <select id="repoSelect">
+                <option value="">Vali Repositoorium</option>
+            </select>
+            <h4>Vali Issue</h4>
+            <select id="issueSelect">
+                <option value="">Vali Issue</option>
+            </select>
+        </div>
 
+        <div id="rightSide">
+            <h3>Toggl ühendus</h3>
+            <p id="statusText"></p>
+        </div>
+    </div>
+
+    <div id="bottomButtons">
+        <button id="addTogglCommentButton">Lisa Toggl logi Issue kommentaari</button>
+        <p id="commentStatusText"></p>
+    </div>
     <script src="popup.js"></script>
 </body>
 
