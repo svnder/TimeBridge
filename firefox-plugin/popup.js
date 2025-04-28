@@ -20,7 +20,6 @@ const loader = document.getElementById('loader');
 loginButton.addEventListener('click', () => {
     browser.tabs.create({ url: "https://track.toggl.com/login" }).then((tab) => {
         loginTabId = tab.id;
-        loader.style.display = 'block';
         statusText.textContent = "";
 
         loginCheckInterval = setInterval(() => {
@@ -38,7 +37,6 @@ loginButtonGithub.addEventListener('click', () => {
         return;
     }
 
-    loader.style.display = 'block';
     githubStatusText.textContent = "";
 
     fetch('https://api.github.com/user', {
@@ -49,7 +47,7 @@ loginButtonGithub.addEventListener('click', () => {
         }
     })
         .then(response => {
-            loader.style.display = 'none';
+            loader.classList.remove('hidden');
             if (response.status === 200) {
                 response.json().then(user => {
                     githubStatusText.innerHTML = `✅ GitHub login õnnestus!<br><strong>${user.login}</strong>`;
@@ -59,15 +57,15 @@ loginButtonGithub.addEventListener('click', () => {
                     localStorage.setItem('githubUserAvatar', user.avatar_url);
                     browser.storage.local.set({ githubToken: githubToken, githubUser: user.login, githubUserId: user.id, githubUserAvatar: user.avatar_url });
 
-                    document.getElementById('githubTokenInput').style.display = 'none';
-                    loginButtonGithub.style.display = 'none';
+                    document.getElementById('githubTokenInput').classList.add('hidden');
+                    loginButtonGithub.classList.add('hidden');
                 });
             } else {
                 githubStatusText.textContent = "❌ GitHub ühendus ebaõnnestus. Kontrolli tokenit või õigusi.";
             }
         })
         .catch(error => {
-            loader.style.display = 'none';
+            loader.classList.add('hidden');
             githubStatusText.textContent = "⚠️ Viga GitHub API-ga: " + error.message;
         });
 });
@@ -86,7 +84,7 @@ function checkLoginStatus(autoClose) {
             response.json().then(entries => {
                 loadedTogglEntries = entries; // Salvestame sissekanded mällu
 
-                loader.style.display = 'none';
+                loader.classList.add('hidden');
                 statusText.innerHTML = "<strong>Toggl Status: Oled sisse loginud!</strong><br><br>";
 
                 if (entries.length > 0) {
@@ -121,7 +119,6 @@ function checkLoginStatus(autoClose) {
                         `;
                     });
 
-                    // 🔥 Pärast DOMi ehitamist lisame "Vali kõik" event listeneri
                     const selectAllCheckbox = document.getElementById('selectAllEntries');
                     selectAllCheckbox.addEventListener('change', (e) => {
                         const isChecked = e.target.checked;
@@ -135,8 +132,8 @@ function checkLoginStatus(autoClose) {
                     statusText.innerHTML += "Aja logisid ei leitud.";
                 }
 
-                loginButton.style.display = 'none';
-                checkStatusButton.style.display = 'none';
+                loginButton.classList.add('hidden');;
+                checkStatusButton.classList.add('hidden');;
 
                 if (autoClose && loginTabId !== null) {
                     browser.tabs.remove(loginTabId);
@@ -149,15 +146,15 @@ function checkLoginStatus(autoClose) {
                 }
             });
         } else if (response.status === 401) {
-            loader.style.display = 'none';
+            loader.classList.add('hidden');
             statusText.textContent = "❌ Pole veel sisse loginud Togglisse.";
         } else {
-            loader.style.display = 'none';
+            loader.classList.add('hidden');
             statusText.textContent = "⚠️ Tundmatu viga: " + response.status;
         }
     })
     .catch(error => {
-        loader.style.display = 'none';
+        loader.classList.add('hidden');
         statusText.textContent = "⚠️ Viga Toggl API-ga: " + error.message;
     });
 }
@@ -319,7 +316,7 @@ function loadIssuesForRepo(repoFullName) {
     })
         .then(response => response.json())
         .then(issues => {
-            issueSelect.innerHTML = '<option value="">Vali Issue</option>';
+            issueSelect.innerHTML = '<option id="selectIssueOption" value="">Vali Issue</option>';
             if (issues.length > 0) {
                 issues.forEach(issue => {
                     const option = document.createElement('option');
@@ -348,15 +345,23 @@ document.addEventListener('DOMContentLoaded', () => {
     issueSelect.disabled = true;
     issueSelect.innerHTML = '<option value="">Vali kõigepealt Repo</option>';
 
-
+    if (!token) {
+        document.getElementById('issueSelect').classList.add('hidden');
+        document.getElementById('repoSelect').classList.add('hidden');
+        document.getElementById('bottomButtons').classList.add('hidden');
+        document.getElementById('commentStatusText').classList.add('hidden');
+        document.getElementById('leftSide').classList.add('hidden');
+        document.getElementById('rightSide').classList.add('hidden');
+        
+    }
 
     if (token && user) {
-        document.getElementById('githubTokenInput').style.display = 'none';
-        loginButtonGithub.style.display = 'none';
+        document.getElementById('githubTokenInput').classList.add('hidden');
+        loginButtonGithub.classList.add('hidden');
 
         githubStatusText.innerHTML = `✅ GitHub login õnnestus!<br><strong>${user}</strong><br>`;
         if (avatar) {
-            githubStatusText.innerHTML += `<img src="${avatar}" alt="GitHub Avatar" style="width: 60px; height: 60px"><br><br>`;
+            githubStatusText.innerHTML += `<img src="${avatar}" alt="GitHub Avatar" style="width: 60px; height: 60px; border-radius:50%"><br><br>`;
         }
         fetchUserRepositories(token);
     }

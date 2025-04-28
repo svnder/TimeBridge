@@ -1,0 +1,10 @@
+:root {
+  --background-color: #3b82f6
+  --primary-hover: #2563eb;
+
+  --background-color: #f9fafb
+}
+
+.hidden {
+  display: none;
+}
