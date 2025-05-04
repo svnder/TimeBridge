@@ -45,7 +45,7 @@ def format_entry(entry):
 
     # Posts the time entry details to a GitHub issue in the specified repository.
 def post_to_github(issue_number, message):
-    url = f'https://api.github.com/repos/{GITHUB_REPO}/issues'
+    url = f'https://api.github.com/repos/svnder/timebridge/issues/7'
     headers = {
         'Authorization': f'token {GITHUB_TOKEN}',
         'Accept': 'application/vnd.github.v3+json'

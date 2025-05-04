@@ -1,0 +1,25 @@
+{
+    "manifest_version": 3,
+    "name": "TimeBridge",
+    "description": "A Firefox extension to combine Toggl and GitHub issues.",
+    "version": "1.0",
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {"48": "icons/icon48.png"}
+    },
+    "icons": {
+        "48": "icons/icon48.png"
+    },
+    "permissions": [
+        "storage",
+        "tabs",
+        "contextMenus"
+    ],
+    "host_permissions": [
+        "https://api.github.com/*",
+        "https://api.track.toggl.com/*"
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
+    }
+}
