@@ -1,0 +1,137 @@
+:root {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-text: #ffffff;
+
+  --background-color: #f9fafb;
+  --card-background: #ffffff;
+
+  --text-color: #111827;
+  --secondary-text-color: #4b5563;
+  --disabled-text: #9ca3af;
+
+  --input-border: #d1d5db;
+  --border-radius: 0.275rem;
+  --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  --padding: 0.5rem 1rem; 
+
+  /* Feedback colors */
+  --success-color: #10b981;
+  --error-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #3b82f6;       
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  padding: 1rem;
+  margin: 0;
+  transition: background-color 0.3s ease;
+}
+
+select:disabled {
+  color: var(--disabled-text);
+  background-color: #f3f4f6;
+}
+
+#popupContent {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+/* LOGIN STYLES */
+
+#titleName {
+  display: block;
+  text-align: center;
+  font-size: 1.5rem; 
+  font-weight: 700;
+  color: var(--text-color);
+  margin-top: 1.5rem;
+}
+
+/*#links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}*/
+
+#loginContainer {
+  background-color: var(--card-background);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  width: 100%;
+  max-width: 30rem; 
+  margin: 2rem auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+#loginContainer input[type="text"] {
+  width: 90%;
+  padding: 0.175rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+}
+
+#loginContainer button {
+  width: 100%;
+  padding: 0.75rem 0;
+  font-size: 1rem;
+  background-color: var(--primary-color);
+  color: var(--primary-text);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#loginContainer button:hover {
+  background-color: var(--primary-hover);
+}
+
+#tokenGuide {
+  font-size: 0.875rem; 
+  color: var(--secondary-text-color);
+  text-decoration: none;
+  margin-top: 0.5rem;
+  display: inline-block;
+  transition: color 0.3s ease;
+}
+
+#tokenGuide:hover {
+  color: var(--primary-color); 
+  text-decoration: underline;
+}
+
+/* SETTINGS STYLES */
+
+#leftSide, #rightSide {
+  flex: 1;
+  background-color: var(--card-background);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+#leftSide h3, #rightSide h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: var(--text-color);
+}
+
+.hidden {
+  display: none;
+}
