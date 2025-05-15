@@ -1,10 +1,11 @@
 
+
 import toggl from "../api/toggl";
 import togglAPI from "../api/toggl";
 export let togglLoggedIn = false;
 export let loadedTogglEntries = [];
-let loginTabId = null;
-let loginCheckInterval = null;
+export let togglToken = null;
+
 
 const togglLogin = async () => {
     const loginButton = document.getElementById('togglLoginButton');
@@ -21,6 +22,7 @@ const togglLogin = async () => {
         const user = await togglAPI.getTogglUser();
         if (user) {
             togglLoggedIn = true;
+            togglToken = user.api_token;
             loginButton.style.display = 'none';
             localStorage.setItem('loginButton', 'none');
             togglStatusText.innerHTML = `
@@ -30,7 +32,8 @@ const togglLogin = async () => {
                     style="width: 50px; height: 50px; border-radius: 50%;">
             `;
             localStorage.setItem('togglStatus', togglStatusText.innerHTML);
-            return;
+            console.log("Toggl sisselogimine õnnestus:", user.api_token);
+            return true;
         }
     } catch (err) {
         console.log("Ei ole veel sisse loginud või sessioon aegunud.");
@@ -91,11 +94,7 @@ const togglLogin = async () => {
             }
         }, 3000);
     });
-
-
 }
-
-
 
 
 export default { togglLogin };
