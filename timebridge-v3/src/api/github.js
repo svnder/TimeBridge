@@ -9,21 +9,25 @@ export async function fetchGithubUser(token) {
     });
 }
 
-export async function fetchUserRepos(token) {
+const fetchUserRepos = async (token) => {
     return axios.get('https://api.github.com/user/repos?sort=updated&per_page=100', {
         headers: {
-            'Authorization': `token ${token}`
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
         }
     });
 }
 
-export async function fetchRepoIssues(token, repoFullName) {
+const fetchRepoIssues = async (token, repoFullName) => {
     return axios.get(`https://api.github.com/repos/${repoFullName}/issues`, {
         headers: {
-            'Authorization': `token ${token}`
+            Authorization: `token ${token}`,
+            Accept: 'application/vnd.github.v3+json',
+            
         }
     });
-}
+};
+
 
 export async function postIssueComment(token, repoFullName, issueNumber, body) {
     return axios.post(`https://api.github.com/repos/${repoFullName}/issues/${issueNumber}/comments`, {
@@ -35,3 +39,5 @@ export async function postIssueComment(token, repoFullName, issueNumber, body) {
         }
     });
 }
+
+export default { fetchUserRepos, fetchRepoIssues };

@@ -1,23 +1,52 @@
 import { fetchGithubUser } from '../api/github.js';
-import { fetchUserRepos } from '../api/github.js'; // Kui vaja
 import { setLoaderVisible } from '../ui/status.js';
-import { checkBothLogins } from '../auth/checkLogins.js';
 
 export let githubLoggedIn = false;
+export let githubToken = null;
 
-const initGithubLogin = () => {
-    const githubTokenInput = document.getElementById('githubTokenInput');
-    const loginButtonGithub = document.getElementById('githubLoginButton');
+const githubLogin = async () => {
+    const loginButton = document.getElementById('githubLoginButton');
     const githubStatusText = document.getElementById('githubStatusText');
+    const tokenInput = document.getElementById('githubTokenInput');
 
-    loginButtonGithub.addEventListener('click', async () => {
-        console.log("GitHub login nupp vajutatud");
+    // Kuvame salvestatud staatuse (kui olemas)
+    const savedGithubStatus = localStorage.getItem('githubStatus');
+    if (savedGithubStatus) {
+        githubStatusText.innerHTML = savedGithubStatus;
+    } else {
+        githubStatusText.innerHTML = "<strong>GitHub Status: Pole sisse logitud</strong><br><br>";
+    }
+
+    // Proovime automaatselt kontrollida sisselogimist
+    const stored = await browser.storage.local.get(['githubToken', 'githubStatus']);
+    if (stored.githubToken && stored.githubStatus) {
+        try {
+            const response = await fetchGithubUser(stored.githubToken);
+            const user = response.data;
+
+            githubLoggedIn = true;
+            githubToken = stored.githubToken;
+
+            tokenInput.setAttribute('readonly', true);
+            loginButton.setAttribute('disabled', true);
+            githubStatusText.innerHTML = `
+                ✅ Oled juba sisse loginud GitHubi!<br>
+                <strong>${user.login}</strong><br>
+                <img src="${user.avatar_url}" alt="GitHub Avatar" style="width: 50px; height: 50px; border-radius: 50%;">
+            `;
+            return true;
+        } catch (err) {
+            console.warn("Salvestatud GitHub token on aegunud või kehtetu.");
+        }
+    }
+
+    // Kui vajutatakse login-nuppu
+    loginButton.addEventListener('click', async () => {
         if (githubLoggedIn) return;
 
-        const githubToken = githubTokenInput.value.trim();
-
-        if (!githubToken || githubToken.length < 40) {
-            githubStatusText.textContent = "Palun kontrolli GitHubi tokenit. See peab olema vähemalt 40 tähemärki pikk.";
+        const token = tokenInput.value.trim();
+        if (!token || token.length < 40) {
+            githubStatusText.textContent = "Palun sisesta kehtiv GitHub token (vähemalt 40 tähemärki).";
             return;
         }
 
@@ -25,36 +54,48 @@ const initGithubLogin = () => {
         setLoaderVisible(true);
 
         try {
-            const response = await fetchGithubUser(githubToken);
+            const response = await fetchGithubUser(token);
             const user = response.data;
+
             githubLoggedIn = true;
+            githubToken = token;
 
-            githubTokenInput.setAttribute('readonly', true);
-            loginButtonGithub.setAttribute('disabled', true);
+            tokenInput.setAttribute('readonly', true);
+            loginButton.setAttribute('disabled', true);
+            githubStatusText.innerHTML = `
+                ✅ GitHub login õnnestus!<br>
+                <strong>${user.login}</strong><br>
+                <img src="${user.avatar_url}" alt="GitHub Avatar" style="width: 50px; height: 50px; border-radius: 50%;">
+            `;
 
-            githubStatusText.innerHTML = `GitHub login õnnestus!<br><strong>${user.login}</strong>`;
-            githubStatusText.innerHTML += `<br><img src="${user.avatar_url}" alt="GitHub Avatar" style="width: 50px; height: 50px; border-radius: 50%;">`;
-
-            // Salvestame info
-            localStorage.setItem('githubToken', githubToken);
             localStorage.setItem('githubStatus', githubStatusText.innerHTML);
 
             await browser.storage.local.set({
-                githubToken: githubToken,
+                githubToken: token,
+                githubStatus: "✅ GitHub login õnnestus!",
                 githubUser: user.login,
-                githubUserId: user.id,
-                githubUserAvatar: user.avatar_url,
-                githubStatus: "✅ GitHub login õnnestus!"
+                githubUserAvatar: user.avatar_url
             });
 
-            checkBothLogins(); // Kontrolli, kas mõlemad loginid tehtud
+            // checkBothLogins(); ← Lisa kui soovid kohe UI uuendada
         } catch (error) {
-            console.error("GitHub login error:", error);
-            githubStatusText.textContent = "⚠️ Viga GitHub API-ga: " + (error?.response?.data?.message || error.message);
+            githubStatusText.textContent = "⚠️ Viga GitHub loginis: " + (error?.response?.data?.message || error.message);
         } finally {
             setLoaderVisible(false);
         }
     });
-}
 
-export default { initGithubLogin };
+    return false;
+};
+
+const getGithubToken = async () => {
+    const stored = await browser.storage.local.get(['githubToken']);
+    return stored.githubToken || null;
+};
+
+const isGithubLoggedIn = async () => {
+    const token = await getGithubToken();
+    return !!token;
+};
+
+export default { githubLogin, getGithubToken , isGithubLoggedIn };
