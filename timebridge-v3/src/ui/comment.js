@@ -1,7 +1,7 @@
 import { postIssueComment } from '../api/github.js';
 import { loadedTogglEntries } from '../auth/togglAuth.js';
 
-export function setupCommenting() {
+const setupCommenting = () => {
     const addButton = document.getElementById('addTogglCommentButton');
     const issueSelect = document.getElementById('issueSelect');
     const githubStatusText = document.getElementById('githubStatusText');
@@ -11,22 +11,22 @@ export function setupCommenting() {
         const selectedIssueNumber = issueSelect.value;
 
         if (!githubToken) {
-            githubStatusText.textContent = "❌ Palun logi sisse GitHubi enne kommentaari lisamist.";
+            githubStatusText.textContent = "❌ Please log in to GitHub before adding a comment.";
             return;
         }
 
         if (!selectedIssueNumber) {
-            githubStatusText.textContent = "❌ Palun vali GitHubi issue enne kommentaari lisamist.";
+            githubStatusText.textContent = "❌ Please select a GitHub issue.";
             return;
         }
 
         const selectedCheckboxes = document.querySelectorAll('.toggl-entry-checkbox:checked');
         if (selectedCheckboxes.length === 0) {
-            githubStatusText.textContent = "❌ Palun vali vähemalt üks Toggl sissekanne.";
+            githubStatusText.textContent = "❌ Please select at least one Toggl entry.";
             return;
         }
 
-        let commentBody = '```tekst\n';
+        let commentBody = '```text\n';
         let totalTime = 0;
 
         selectedCheckboxes.forEach(checkbox => {
@@ -34,13 +34,13 @@ export function setupCommenting() {
             const entry = loadedTogglEntries[entryIndex];
             if (!entry) return;
 
-            const description = entry.description || "Kirjeldus puudub";
+            const description = entry.description || "No description";
             const startDate = new Date(entry.start);
             const dateFormatted = startDate.toLocaleDateString();
             const startTimeFormatted = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            let endTimeFormatted = "Kestab veel...";
-            let durationFormatted = "Kestab";
+            let endTimeFormatted = "Still running...";
+            let durationFormatted = "Running";
 
             if (entry.duration > 0) {
                 const endDate = new Date(startDate.getTime() + entry.duration * 1000);
@@ -51,18 +51,18 @@ export function setupCommenting() {
                 const durationMinutes = durationMinutesTotal % 60;
 
                 durationFormatted = durationHours > 0
-                    ? `${durationHours} tundi${durationMinutes > 0 ? ` ${durationMinutes} minutit` : ''}`
-                    : `${durationMinutes} minutit`;
+                    ? `${durationHours} hours${durationMinutes > 0 ? ` ${durationMinutes} minutes` : ''}`
+                    : `${durationMinutes} minutes`;
 
                 totalTime += entry.duration;
             }
 
             commentBody += `
-🗓️ Kuupäev: ${dateFormatted}
-📝 Kirjeldus: ${description}
-🕒 Algus: ${startTimeFormatted}
-🕒 Lõpp: ${endTimeFormatted}
-⏱️ Kestus: ${durationFormatted}
+🗓️ Date: ${dateFormatted}
+📝 Description: ${description}
+🕒 Start: ${startTimeFormatted}
+🕒 End: ${endTimeFormatted}
+⏱️ Duration: ${durationFormatted}
 
 -------------------------------
 `;
@@ -71,7 +71,7 @@ export function setupCommenting() {
         if (totalTime > 0) {
             const totalHours = Math.floor(totalTime / 3600);
             const totalMinutes = Math.floor((totalTime % 3600) / 60);
-            commentBody += `**Kokku: ${totalHours} tundi ${totalMinutes} minutit**\n`;
+            commentBody += `**Total: ${totalHours} hours ${totalMinutes} minutes**\n`;
         }
 
         commentBody += '```';
@@ -81,13 +81,15 @@ export function setupCommenting() {
         postIssueComment(githubToken, repoFullName, selectedIssueNumber, commentBody)
             .then(response => {
                 if (response.status === 201) {
-                    githubStatusText.textContent = "✅ Kommenteerimine õnnestus!";
+                    githubStatusText.textContent = "✅ Comment added successfully!";
                 } else {
-                    githubStatusText.textContent = "❌ Kommenteerimine nurjus. Kontrolli õigusi.";
+                    githubStatusText.textContent = "❌ Comment failed. Check your GitHub permissions.";
                 }
             })
             .catch(error => {
-                githubStatusText.textContent = "⚠️ Viga GitHub API ühendamisel: " + error.message;
+                githubStatusText.textContent = "⚠️ GitHub API error: " + error.message;
             });
     });
-}
+};
+
+export default setupCommenting;

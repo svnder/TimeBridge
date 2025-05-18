@@ -1,52 +1,61 @@
-import GITAPI from '../api/github';
+import { fetchUserRepos, fetchRepoIssues } from '../api/github.js';
 
-const loadRepos = async (token) => {
-    const result = await browser.storage.local.get(['githubToken']);
-    token = result.githubToken;
-    if (!token) {
-        console.error("GitHub token not found in storage.");
-        return;
-    }
+const setupRepoAndIssueSelection = () => {
     const repoSelect = document.getElementById('repoSelect');
+    const issueSelect = document.getElementById('issueSelect');
+    const githubToken = localStorage.getItem('githubToken');
 
-    const response = await GITAPI.fetchUserRepos(token);
-    const repos = response.data;
+    if (!githubToken) return;
 
-    repoSelect.innerHTML = '<option value="">Vali Repositoorium</option>';
-    console.log("Valitud väärtus:", repoSelect.value);
+    fetchUserRepos(githubToken).then(response => {
+        const repos = response.data;
+        repoSelect.innerHTML = '<option value="">Select a Repository</option>';
 
-    repos.forEach(repo => {
-        const option = document.createElement('option');
-        option.value = repo.full_name;
-        option.textContent = repo.name;
-        console.log("Valitud väärtus:", repoSelect.value);
-        repoSelect.appendChild(option);
+        repos.forEach(repo => {
+            const option = document.createElement('option');
+            option.value = repo.full_name;
+            option.textContent = repo.name;
+            repoSelect.appendChild(option);
+        });
     });
-    repoSelect.addEventListener('change', async (event) => {
-        const selectedRepo = event.target.value;
-        console.log("Valitud repositoorium:", selectedRepo);
+
+    repoSelect.addEventListener('change', () => {
+        const selectedRepo = repoSelect.value;
+
         if (selectedRepo) {
-            await loadIssues(token, selectedRepo);
+            issueSelect.disabled = false;
+            loadIssuesForRepo(selectedRepo, githubToken);
+        } else {
+            issueSelect.disabled = true;
+            issueSelect.innerHTML = '<option value="">Select a repository first</option>';
         }
     });
-    repoSelect.value = ""; // Reset the selected value
-    console.log("Valitud väärtus:", repoSelect.value);
+
+    issueSelect.disabled = true;
+    issueSelect.innerHTML = '<option value="">Select a repository first</option>';
 };
 
-const loadIssues = async (token, repoFullName) => {
-    const response = await GITAPI.fetchRepoIssues(token, repoFullName);
-    repoFullName = repoFullName;
-    const issues = response.data;
-
+const loadIssuesForRepo = (repoFullName, token) => {
     const issueSelect = document.getElementById('issueSelect');
-    issueSelect.innerHTML = '<option value="">Vali Probleem</option>';
 
-    issues.forEach(issue => {
-        const option = document.createElement('option');
-        option.value = issue.number;
-        option.textContent = issue.title;
-        issueSelect.appendChild(option);
+    fetchRepoIssues(token, repoFullName).then(response => {
+        const issues = response.data;
+        issueSelect.innerHTML = '<option value="">Select an Issue</option>';
+
+        if (issues.length > 0) {
+            issues.forEach(issue => {
+                const option = document.createElement('option');
+                option.value = issue.number;
+                option.textContent = `#${issue.number} - ${issue.title}`;
+                issueSelect.appendChild(option);
+            });
+        } else {
+            const option = document.createElement('option');
+            option.textContent = "No issues found.";
+            option.disabled = true;
+            issueSelect.appendChild(option);
+        }
     });
-}
+};
 
-export default { loadRepos, loadIssues };
+export default setupRepoAndIssueSelection;

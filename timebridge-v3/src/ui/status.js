@@ -1,10 +1,10 @@
-export function setLoaderVisible(visible) {
+const setLoaderVisible = (visible) => {
     const loader = document.getElementById('loader');
     if (!loader) return;
     loader.classList.toggle('hidden', !visible);
-}
+};
 
-export function restoreLoginStatus() {
+const restoreLoginStatus = () => {
     const githubStatusText = document.getElementById('githubStatusText');
     const togglStatusText = document.getElementById('togglStatusText');
 
@@ -18,4 +18,6 @@ export function restoreLoginStatus() {
     if (togglStatus && togglStatusText) {
         togglStatusText.textContent = togglStatus;
     }
-}
+};
+
+export { setLoaderVisible, restoreLoginStatus };

@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>TimeBridge v1.0</title>
+    <h3>Lisa Toggl logi GitHub Issue'le</h3>
     <link rel="stylesheet" href="./popup.css">
     <style>
         #loader {
@@ -18,7 +19,7 @@
     <div id="popupContent">
         <div id="loginContainer">
             <h3>GitHub ühendus</h3>
-            <input id="githubTokenInput" type="text" placehoder="Sisesta GitHub API Token">
+            <input id="githubTokenInput" type="text" placeholder="Sisesta GitHub API Token">
             <a id="tokenGuide" href="/">Kuidas Githubi token kätte saada</a>
             <button id="githubLoginButton">Logi sisse GitHubiga</button>
             <p id="githubStatusText"></p>
@@ -28,12 +29,7 @@
         </div>
         <div id="leftSide">
             <div id="loader">⏳ Kontrollin ühendust...</div>
-            <p id="githubStatusText"></p>
-
             <img id="githubUserAvatar" src="" alt="">
-
-            <h3>Lisa Toggl logi GitHub Issue'le</h3>
-
             <h3>Vali Repositoorium</h3>
             <select id="repoSelect">
                 <option value="">Vali Repositoorium</option>
@@ -46,8 +42,12 @@
 
         <div id="rightSide">
             <h3>Toggl ühendus</h3>
-            <p id="togglEntries"></p>
-
+            <h4>Vali projekt</h4>
+            <select id="projectSelect">
+                <option value="">— vali projekt —</option>
+            </select>
+            <pre id="togglEntries" style="white-space:pre-wrap"></pre>
+            <p id="togglStatusText"></p>
         </div>
     </div>
 

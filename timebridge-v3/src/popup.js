@@ -1,31 +1,15 @@
-import togglAPI from './api/toggl';
-import togglAUTH from './auth/togglAuth';
-import githubAuth from './auth/githubAuth';
-import checkLogins from './auth/checkLogins';
-import githubRepoIssueUI from './ui/githubRepoIssueUI';
-import togglEntries from './ui/togglEntries';
-import toggl from './api/toggl';
-
-
-
+import initGithubLogin from './auth/githubAuth.js';
+import checkBothLogins from './auth/checkLogins.js';
+import { initTogglLogin } from './auth/togglAuth.js';
+import { restoreLoginStatus } from './ui/status.js';
+import setupRepoAndIssueSelection from './ui/githubRepoIssueUI.js';
+import setupCommenting from './ui/comment.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Toggl API:', togglAPI.fetchTogglEntries);
-    console.log('togglEntriesTESTING:', togglEntries.testEntries);
-    console.log('tooglAPI:', togglAPI.togglToken);
-    console.log('tgfgafdgfa', togglEntries.getEntries)
-    togglEntries.loadTogglEntries();
-    togglEntries.showTogglEntries();
-    togglAPI.getTogglUser();
-    togglAPI.fetchTogglEntries();
-    githubRepoIssueUI.loadRepos();
-    githubRepoIssueUI.loadIssues();
-    togglEntries.showTogglEntries();
-    togglAUTH.togglLogin();
-    githubAuth.githubLogin();
-    checkLogins.checkBothLogins();
-    console.log("Toggl entries LÄBI POPUPI:", togglEntries.showTogglEntries);
-    togglEntries.showTogglEntries();
+    restoreLoginStatus();          // restore saved status
+    checkBothLogins();             // show correct UI state
+    initGithubLogin();             // bind GitHub login button
+    initTogglLogin();              // bind Toggl login button
+    setupRepoAndIssueSelection();  // load repo/issue selects
+    setupCommenting();             // bind “add comment” button
 });
-
-
